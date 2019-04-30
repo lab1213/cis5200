@@ -1,0 +1,120 @@
+﻿
+--Connect to file system
+
+ssh yourusername@xxx.xxx.xxx.77
+
+--Download Data
+
+wget -O ny311data https://www.dropbox.com/s/32z9cvmjt9c0hy2/ny311data.csv?dl=0 
+
+--Create Directories and Move Data
+
+hdfs dfs -mkdir 311data
+hdfs dfs -mkdir 311data/complaints
+
+hdfs dfs -chmod -R o+w .
+
+hdfs dfs -put ny311data.csv 311data/
+hdfs dfs -ls 311data/
+
+--Connect to Hive
+
+!connect jdbc:hive2://cis5200spr19-bdcsce-2.compute-608214094.oraclecloud.internal:2181,cis5200spr19-bdcsce-3.compute-608214094.oraclecloud.internal:2181,cis5200spr19-bdcsce-4.compute-608214094.oraclecloud.internal:2181/;serviceDiscoveryMode=zooKeeper;zooKeeperNamespace=hiveserver2?tez.queue.name=interactive bdcsce_admin
+
+--use your database
+
+--Create Tables
+
+CREATE EXTERNAL TABLE IF NOT EXISTS ny311data(
+unique_key STRING, 
+created_date STRING,
+closed_date STRING,
+agency STRING,
+agency_name STRING,
+complaint_type STRING,
+descriptor STRING,
+location_type STRING,
+incident_zip INT,
+incident_address STRING,
+street_name STRING, 
+cross_street_1 STRING,
+cross_street_2 STRING,
+intersection_street_1 STRING,
+intersection_street_2 STRING,
+address_type STRING,
+city STRING,
+landmark STRING,
+facility_type STRING,
+status STRING,
+due_date STRING,
+resolution_action_updated_date STRING,
+community_board STRING,
+borough STRING,
+x_coordinate_state_plane BIGINT,
+y_coordinate_state_plane BIGINT,
+park_facility_name STRING,
+park_borough STRING,
+school_name STRING,
+school_number STRING,
+school_region STRING,
+school_code STRING, 
+school_phone_number STRING,
+school_address STRING,
+school_city STRING,
+school_state STRING,
+school_zip STRING,
+school_not_found STRING,
+school_or_citywide_complaint STRING,
+vehicle_type STRING,
+taxi_company_borough STRING,
+taxi_pick_up_location STRING,
+bridge_highway_name STRING,
+bridge_highway_direction STRING,
+road_ramp STRING,
+bridge_highway_segment STRING,
+garage_lot_name STRING,
+ferry_direction STRING,
+ferry_terminal_name STRING,
+latitude BIGINT,
+longitude BIGINT,
+location BIGINT
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS TEXTFILE LOCATION '/user/YourUsername/311data'
+TBLPROPERTIES('serialization.null.format'='');
+
+
+
+show tables;
+
+--create table complaints for storing citizen complaints and their geographic locations 
+CREATE EXTERNAL TABLE IF NOT EXISTS complaints(created_date STRING,
+complaint_type STRING,
+city STRING,
+incident_zip INT,
+borough STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS TEXTFILE LOCATION '/user/YourUsername/311data/complaints';
+
+
+describe complaints;
+
+--populate table complaints with data from the ny311data table
+INSERT OVERWRITE TABLE complaints
+SELECT created_date, complaint_type, city, incident_zip, borough
+FROM ny311data
+WHERE city IS NOT NULL
+AND incident_zip IS NOT NULL;
+
+
+SELECT * FROM complaints LIMIT 10;
+
+SELECT * FROM complaints ORDER BY city ASC LIMIT 10;
+
+hdfs dfs -ls /user/YourUsername/311data/complaints
+
+hdfs dfs -get /user/YourUsername/311data/complaints/000000_0
+ls –al
+
+scp yourusername@xxx.xxx.xxx.77:/home/YourUsername/000000_0 complaints.csv
+
