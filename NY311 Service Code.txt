@@ -118,3 +118,37 @@ ls –al
 
 scp yourusername@xxx.xxx.xxx.77:/home/YourUsername/000000_0 complaints.csv
 
+--Create School Data Table
+
+Create a table that stores school complaints, their location along with corresponding due date for complaints:
+
+CREATE EXTERNAL TABLE IF NOT EXISTS schools(
+
+school_name STRING,
+
+school_city STRING,
+
+school_state STRING,
+
+city STRING,
+
+school_or_citywide_complaint STRING,
+
+incident_zip INT,
+
+due_date STRING)
+
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+
+STORED AS TEXTFILE LOCATION
+
+'/user/yourname/ny311data/schools'
+
+
+Verify results:
+
+SELECT * FROM schools LIMIT 15;
+
+Organize school table dataset by ascending order of due_date:
+
+SELECT * FROM schools ORDER BY due_date ASC LIMIT 5;
